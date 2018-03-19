@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "253472953653",
+    "firebase_url": "https://ball-rush-91817738.firebaseio.com",
+    "project_id": "ball-rush-91817738",
+    "storage_bucket": "ball-rush-91817738.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:253472953653:android:1a0cb52a0096088e",
+        "android_client_info": {
+          "package_name": "com.CollegeStudios.BallRush"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "253472953653-3ss5bb17cbfus7vaavm8jmvicplm9vd4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYmJF2-Q2vRrNX3w-K2iHxAGSaJfje3H8"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "253472953653-3ss5bb17cbfus7vaavm8jmvicplm9vd4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

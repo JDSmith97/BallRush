@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: aa13d621f04f3234199e7864044c6cb8
+timeCreated: 1517325684
+licenseType: Free
+TrueTypeFontImporter:
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Fopi Rush
+  fontNames:
+  - Fopi Rush
+  fallbackFontReferences: []
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
