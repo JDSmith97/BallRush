@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
-using GooglePlayGames;
+//using GooglePlayGames;
+//using GooglePlayGames.BasicApi;
 using UnityEngine.SocialPlatforms;
-using GooglePlayGames.BasicApi;
-using GoogleMobileAds.Api;
 
 public class MainMenu : MonoBehaviour
 {
@@ -14,7 +13,7 @@ public class MainMenu : MonoBehaviour
     public GameObject muteButton;
     public GameObject unmuteButton;
     public GameObject playerObject;
-    public GameObject playButton;
+    public GameObject playButton; 
     public GameObject leaderboardButton;
     public GameObject helpButton;
 
@@ -22,8 +21,6 @@ public class MainMenu : MonoBehaviour
     public GameObject tutorial2;
     public GameObject nextButton;
     public GameObject closeButton;
-
-    private BannerView bannerView;
 
     public RectTransform logo;
     public RectTransform playButtonPos;
@@ -37,7 +34,7 @@ public class MainMenu : MonoBehaviour
     private Vector2 muteButtonPosition, muteButtonEnd;
     private Vector2 helpButtonPosition, helpButtonEnd;
 
-    public Camera camera;
+    public Camera menuCamera;
 
     public GameObject mainMenuCanvas;
     public GameObject helpCanvas;
@@ -45,44 +42,44 @@ public class MainMenu : MonoBehaviour
 
     public Text highScore;
     public Text coinsText;
+    public Text currentLevel;
 
-    Material material1;
-    Material material2;
-    Material material3;
 
-    int[] objects = { 1, 2, 3 };
-    int objectPos = 0;
     int highestScore = 0;
-    int skin = 0;
-    int coins = 0;
     float logoSpeed = 0.5f;
     float playButtonSpeed = 1f;
     float leaderboardButtonSpeed = 1.2f;
     float startTime;
-    bool logoEnd = false;
+    int currentLvl;
 
+    void Awake()
+    {
+        Application.targetFrameRate = 60;
+
+    }
 
     public void Start()
     {
-        //Google Ads AppID's
-#if UNITY_ANDROID
-        string appId = "ca-app-pub-9124426371512928/6510852473";
-#elif UNITY_IPHONE
-        string appId = "ca-app-pub-9124426371512928/9915745016";
-#else
-        string appId = "unexpected_platform";
-#endif
+        startTime = Time.time;
 
-        // Initialize the Google Mobile Ads SDK.
-        MobileAds.Initialize(appId);
+
+        if (PlayerPrefs.HasKey("Level"))
+        {
+            currentLvl = PlayerPrefs.GetInt("Level");
+        }
+        else
+        {
+            PlayerPrefs.SetInt("Level", 1);
+            PlayerPrefs.SetInt("LevelColour", 0);
+        }
+
 
         // Activate the Google Play Games platform
-        PlayGamesPlatform.Activate();
-        // authenticate user:
-        Social.localUser.Authenticate((bool success) =>
-        {
-            // handle success or failure
-        });
+       // PlayGamesPlatform.Activate();
+         //authenticate user:
+        //Social.localUser.Authenticate((bool success) =>{
+        // handle success or failure
+        //});
 
         unmuteButton = GameObject.Find("Unmute button");
         muteButton = GameObject.Find("Mute button");
@@ -96,11 +93,11 @@ public class MainMenu : MonoBehaviour
 
         logo = logo.GetComponent<RectTransform>();
         textStartPosition = logo.anchoredPosition;
-        textEndPosition = new Vector2(-233.5f, 259.68f);
+        textEndPosition = new Vector2(-233.5f, 291f);
 
         playButtonPos = playButtonPos.GetComponent<RectTransform>();
         playButtonPosition = playButtonPos.anchoredPosition;
-        playButtonEnd = new Vector2(7.2f, -146.8f);
+        playButtonEnd = new Vector2(7.2f, -163f);
 
         leaderboardButtonPos = leaderboardButtonPos.GetComponent<RectTransform>();
         leaderboardButtonPosition = leaderboardButtonPos.anchoredPosition;
@@ -112,39 +109,34 @@ public class MainMenu : MonoBehaviour
 
         helpButtonPos = helpButtonPos.GetComponent<RectTransform>();
         helpButtonPosition = helpButtonPos.anchoredPosition;
-        helpButtonEnd = new Vector2(562f, 250f);
+        helpButtonEnd = new Vector2(-78f, -75f);
 
-        highScore.canvasRenderer.SetAlpha(0.0f);
+        highScore.canvasRenderer.SetAlpha(1.0f);
 
-        startTime = Time.time;
+        currentLevel.canvasRenderer.SetAlpha(1.0f);
 
-        camera.enabled = true;
-
-        material1 = Resources.Load("Player") as Material;
+        menuCamera.enabled = true;
 
         highestScore = PlayerPrefs.GetInt("Score", 0);
-        objectPos = PlayerPrefs.GetInt("Skin", 0);
 
-        highScore.text = "HIGHEST SCORE:" + highestScore;
+        highScore.text = "Highest Score: " + highestScore;
 
-        //Request Banner Ad
-        RequestBanner();
+        currentLevel.text = "Current Level: " + currentLvl;
 
     }
 
-    public void FixedUpdate()
+    public void Update()
     {
         logo.anchoredPosition = Vector2.Lerp(textStartPosition, textEndPosition, (Time.time - startTime) / logoSpeed);
         //Menu Startup Animations
         if (logo.anchoredPosition == textEndPosition)
         {
-            logoEnd = true;
-            highScore.CrossFadeAlpha(1.0f, 1.5f, false);
             playButtonPos.anchoredPosition = Vector2.Lerp(playButtonPosition, playButtonEnd, (Time.time - startTime) / playButtonSpeed);
             leaderboardButtonPos.anchoredPosition = Vector2.Lerp(leaderboardButtonPosition, leaderboardButtonEnd, (Time.time - startTime) / leaderboardButtonSpeed);
             muteButtonPos.anchoredPosition = Vector2.Lerp(muteButtonPosition, muteButtonEnd, (Time.time - startTime) / leaderboardButtonSpeed);
             helpButtonPos.anchoredPosition = Vector2.Lerp(helpButtonPosition, helpButtonEnd, (Time.time - startTime) / leaderboardButtonSpeed);
         }
+
     }
 
     //Open help screen 
@@ -173,9 +165,14 @@ public class MainMenu : MonoBehaviour
     }
 
     //Load game when play button is pressed
-    public void loadScene()
+    public void loadLevel()
     {
-        hideBanner();
+        StartCoroutine(playGame());
+    }
+
+    IEnumerator playGame()
+    {
+        yield return new WaitForSeconds(1f);
         SceneManager.LoadScene("Game");
     }
 
@@ -205,33 +202,4 @@ public class MainMenu : MonoBehaviour
         Social.ShowLeaderboardUI();
     }
 
-    //Hide Banner Ad
-    public void hideBanner()
-    {
-        bannerView.Hide();
-    }
-
-    //Request Banner using Google Ad's request code
-    private void RequestBanner()
-    {
-#if UNITY_ANDROID
-        string adUnitId = "ca-app-pub-9124426371512928/6510852473";  //ca-app-pub-9124426371512928/6510852473
-#elif UNITY_IPHONE
-            string adUnitId = "ca-app-pub-9124426371512928/9915745016"; //ca-app-pub-9124426371512928/9915745016
-#else
-            string adUnitId = "unexpected_platform";
-#endif
-
-        // Create a 320x50 banner at the top of the screen.
-        bannerView = new BannerView(adUnitId, AdSize.Banner, AdPosition.Bottom);
-
-        // Create an empty ad request.
-        AdRequest request = new AdRequest.Builder().Build();
-
-        // Load the banner with the request.
-
-        this.bannerView.LoadAd(request);
-
-    }
-        
 }

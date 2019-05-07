@@ -25,7 +25,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 4
   m_IsActive: 1
 --- !u!4 &4608168876507676
 Transform:
@@ -51,3 +51,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22d15027846cfd44a96e66a3abf8878e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  spawnValues: {x: 0, y: 0, z: 0}
+  hazardCount: 0
+  startWait: 0
+  waveWait: 0
+  spawnernumber: 0

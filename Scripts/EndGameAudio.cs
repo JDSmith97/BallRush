@@ -6,14 +6,14 @@ public class EndGameAudio : MonoBehaviour
 {
 
     public AudioClip AudioSource;
-    AudioSource audio;
+    AudioSource endAudio;
     public float volume;
 
     // Use this for initialization
     void Start()
     {
         //Get audio source
-        audio = GetComponent<AudioSource>();
+        endAudio = GetComponent<AudioSource>();
     }
 
     public void OnTriggerEnter(Collider other)
@@ -21,7 +21,7 @@ public class EndGameAudio : MonoBehaviour
         //Play sound when player touches end game trigger
         if (other.gameObject.CompareTag("Player"))
         {
-            audio.PlayOneShot(AudioSource);
+            endAudio.PlayOneShot(AudioSource);
         }
 
     }

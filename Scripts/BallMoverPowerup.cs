@@ -22,7 +22,7 @@ public class BallMoverPowerup : MonoBehaviour {
     void Update()
     {
         
-        if (PlayerController.gameOver == true)
+        if (PlayerController.gameOver == true || PlayerController.levelComplete == true)
         {
             ball.constraints = RigidbodyConstraints.FreezePosition;
         }

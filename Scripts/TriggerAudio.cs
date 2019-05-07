@@ -5,12 +5,12 @@ using UnityEngine;
 public class TriggerAudio : MonoBehaviour {
 
     public AudioClip AudioSource;
-    AudioSource audio;
+    AudioSource gameAudio;
     public float volume;
 
 	//Get audio source
 	void Start () {
-        audio = GetComponent<AudioSource>();
+        gameAudio = GetComponent<AudioSource>();
 	}
 	
     //Play end game sound when player hits game over trigger
@@ -18,7 +18,8 @@ public class TriggerAudio : MonoBehaviour {
     {
         if (collision.gameObject.name == "Player")
         {
-            audio.PlayOneShot(AudioSource);
+            gameAudio.PlayOneShot(AudioSource);
+            //iOSHapticController.instance.TriggerImpactMedium();
         }
     }
 
