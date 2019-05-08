@@ -6,3 +6,5 @@ Current bugs:
 
 Features to be added: 
 - Google play services leaderboard
+
+Google Play Store link: https://play.google.com/store/apps/details?id=com.CollegeStudios.BallRush
