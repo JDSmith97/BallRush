@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
-//using GooglePlayGames;
-//using GooglePlayGames.BasicApi;
+using GooglePlayGames;
+using GooglePlayGames.BasicApi;
 using UnityEngine.SocialPlatforms;
 
 public class MainMenu : MonoBehaviour
@@ -44,24 +44,28 @@ public class MainMenu : MonoBehaviour
     public Text coinsText;
     public Text currentLevel;
 
+    Material material1;
+    Material material2;
+    Material material3;
 
+    int[] objects = { 1, 2, 3 };
+    int objectPos = 0;
     int highestScore = 0;
+    int skin = 0;
+    int coins = 0;
     float logoSpeed = 0.5f;
     float playButtonSpeed = 1f;
     float leaderboardButtonSpeed = 1.2f;
     float startTime;
     int currentLvl;
+    bool logoEnd = false;
 
     void Awake()
     {
         Application.targetFrameRate = 60;
-
     }
-
     public void Start()
     {
-        startTime = Time.time;
-
 
         if (PlayerPrefs.HasKey("Level"))
         {
@@ -73,13 +77,13 @@ public class MainMenu : MonoBehaviour
             PlayerPrefs.SetInt("LevelColour", 0);
         }
 
-
         // Activate the Google Play Games platform
-       // PlayGamesPlatform.Activate();
-         //authenticate user:
-        //Social.localUser.Authenticate((bool success) =>{
+        PlayGamesPlatform.Activate();
+        // authenticate user:
+        Social.localUser.Authenticate((bool success) =>
+        { 
         // handle success or failure
-        //});
+        });
 
         unmuteButton = GameObject.Find("Unmute button");
         muteButton = GameObject.Find("Mute button");
@@ -111,13 +115,18 @@ public class MainMenu : MonoBehaviour
         helpButtonPosition = helpButtonPos.anchoredPosition;
         helpButtonEnd = new Vector2(-78f, -75f);
 
-        highScore.canvasRenderer.SetAlpha(1.0f);
+        highScore.canvasRenderer.SetAlpha(0.0f);
 
-        currentLevel.canvasRenderer.SetAlpha(1.0f);
+        currentLevel.canvasRenderer.SetAlpha(0.0f);
+
+        startTime = Time.time;
 
         menuCamera.enabled = true;
 
+        material1 = Resources.Load("Player") as Material;
+
         highestScore = PlayerPrefs.GetInt("Score", 0);
+        objectPos = PlayerPrefs.GetInt("Skin", 0);
 
         highScore.text = "Highest Score: " + highestScore;
 
@@ -125,18 +134,20 @@ public class MainMenu : MonoBehaviour
 
     }
 
-    public void Update()
+    public void FixedUpdate()
     {
         logo.anchoredPosition = Vector2.Lerp(textStartPosition, textEndPosition, (Time.time - startTime) / logoSpeed);
         //Menu Startup Animations
         if (logo.anchoredPosition == textEndPosition)
         {
+            logoEnd = true;
+            highScore.CrossFadeAlpha(1.0f, 1.5f, false);
+            currentLevel.CrossFadeAlpha(1.0f, 1.5f, false);
             playButtonPos.anchoredPosition = Vector2.Lerp(playButtonPosition, playButtonEnd, (Time.time - startTime) / playButtonSpeed);
             leaderboardButtonPos.anchoredPosition = Vector2.Lerp(leaderboardButtonPosition, leaderboardButtonEnd, (Time.time - startTime) / leaderboardButtonSpeed);
             muteButtonPos.anchoredPosition = Vector2.Lerp(muteButtonPosition, muteButtonEnd, (Time.time - startTime) / leaderboardButtonSpeed);
             helpButtonPos.anchoredPosition = Vector2.Lerp(helpButtonPosition, helpButtonEnd, (Time.time - startTime) / leaderboardButtonSpeed);
         }
-
     }
 
     //Open help screen 
@@ -165,14 +176,8 @@ public class MainMenu : MonoBehaviour
     }
 
     //Load game when play button is pressed
-    public void loadLevel()
-    {
-        StartCoroutine(playGame());
-    }
-
-    IEnumerator playGame()
-    {
-        yield return new WaitForSeconds(1f);
+    public void loadScene()
+    { 
         SceneManager.LoadScene("Game");
     }
 

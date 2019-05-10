@@ -19,7 +19,7 @@ public class TriggerAudio : MonoBehaviour {
         if (collision.gameObject.name == "Player")
         {
             gameAudio.PlayOneShot(AudioSource);
-            //iOSHapticController.instance.TriggerImpactMedium();
+            iOSHapticController.instance.TriggerImpactMedium();
         }
     }
 

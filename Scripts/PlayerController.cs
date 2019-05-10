@@ -2,12 +2,12 @@
 using UnityEngine.SceneManagement;
 using UnityStandardAssets.CrossPlatformInput;
 
-
 // Include the namespace required to use Unity UI
 using UnityEngine.UI;
 using Ez.Pooly;
 using System.Collections;
-using Lean.Touch;
+using GooglePlayGames;
+using GooglePlayGames.BasicApi;
 using UnityEngine.SocialPlatforms;
 
 public class PlayerController : MonoBehaviour {
@@ -24,6 +24,7 @@ public class PlayerController : MonoBehaviour {
     public GameObject restartButton;
     int powerupCount = 0;
 
+    int coins = 0;
     int pastScore;
     int powerupScore;
 
@@ -47,6 +48,7 @@ public class PlayerController : MonoBehaviour {
     private PoolySpawner spawnerBig1;
     private PoolySpawner spawnerBig2;
     private PoolySpawner spawnerBig3;
+    private PoolySpawner spawnerPowerupRB;
     private PoolySpawner spawnerPowerupResize;
     private PoolySpawner spawnerPowerupSpawnCount;
     private PoolySpawner spawnerPowerupResizeLarger;
@@ -64,6 +66,7 @@ public class PlayerController : MonoBehaviour {
     // Create private references to the rigidbody component on the player, and the count of pick up objects picked up so far
     private Rigidbody player;
 
+    private int count;
     public static bool gameOver;
     private float startTime;
     private int seconds;
@@ -75,6 +78,8 @@ public class PlayerController : MonoBehaviour {
 
     public GameObject mainMenuCanvas;
 
+    int highestScore = 0;
+
     int skin;
 
     //sounds
@@ -82,7 +87,7 @@ public class PlayerController : MonoBehaviour {
     AudioSource gameAudio;
     public AudioClip song;
     AudioSource theSong;
-
+    
     public float volume;
 
     public GameObject tutorial1;
@@ -91,6 +96,7 @@ public class PlayerController : MonoBehaviour {
     public GameObject closeButton;
 
     public GameObject helpCanvas;
+    public GameObject helpButton;
 
     public int totalScore;
     public int currentScore = 0;
@@ -116,6 +122,7 @@ public class PlayerController : MonoBehaviour {
     public GameObject spawnerGameObject11;
     public GameObject spawnerGameObject12;
     public GameObject spawnerGameObject13;
+    public GameObject spawnerRB;
     public GameObject spawnerResize;
     public GameObject spawnerSpawnCount;
     public GameObject spawnerResizeLarger;
@@ -130,32 +137,6 @@ public class PlayerController : MonoBehaviour {
     public int[] colours = { 1, 2, 3, 4, 5 };
     public int arrayPos = 0;
 
-    public int zone1 = 0;
-    public int zone2 = 0;
-    public int zone3 = 0;
-    public int zone4 = 0;
-    public int zone5 = 0;
-
-    public GameObject zone1Drop;
-    public GameObject zone2Drop;
-    public GameObject zone3Drop;
-    public GameObject zone4Drop;
-    public GameObject zone5Drop;
-
-    public GameObject Lean_Touch;
-
-    public static bool zoneWarning1 = false;
-    public static bool zoneWarning2 = false;
-    public static bool zoneWarning3 = false;
-    public static bool zoneWarning4 = false;
-    public static bool zoneWarning5 = false;
-
-
-    public Rigidbody zoneNo1;
-    public Rigidbody zoneNo2;
-    public Rigidbody zoneNo3;
-    public Rigidbody zoneNo4;
-
     public Material[] material;
     public MeshRenderer meshRenderer;
 
@@ -168,30 +149,13 @@ public class PlayerController : MonoBehaviour {
     // At the start of the game..
     public void Start ()
 	{
-        // Authenticate
-        Social.localUser.Authenticate(ProcessAuthentication);
-
-        //reset platform and progress bar
-        progressBar.value = 0;
-        zoneWarning1 = false;
-        zoneWarning2 = false;
-        zoneWarning3 = false;
-        zoneWarning4 = false;
-        zoneWarning5 = false;
-
-        //play time
         Time.timeScale = 1;
-
-        Lean_Touch = GameObject.Find("LeanTouch");
-
-        Lean_Touch.GetComponent<LeanTouch>().enabled = true;
 
         //buttons 
         unmuteButton = GameObject.Find("UnMute button");
         muteButton = GameObject.Find("Mute button");
         mainMenuButton = GameObject.Find("Menu button");
         leaderboardButton = GameObject.Find("Leaderboard Button");
-
 
         //Deactivate all buttons and canvases not needed when game starts
         unmuteButton.SetActive(false);
@@ -200,6 +164,8 @@ public class PlayerController : MonoBehaviour {
         gameoverMuteButton.SetActive(false);
         leaderboardButton.SetActive(false);
         noadsButton.SetActive(false);
+        helpCanvas.SetActive(false);
+        helpButton.SetActive(false);
         nextLevelButton.SetActive(false);
 
         mainMenuCanvas.SetActive(true);
@@ -207,15 +173,13 @@ public class PlayerController : MonoBehaviour {
         //sound
         gameAudio = GetComponent<AudioSource>();
 
-        //set to 0
-        progressBar.value = 0;
+        theSong = GetComponent<AudioSource>();
 
         // Assign the Rigidbody component to our private rb variable
         player = GetComponent<Rigidbody>();
        
         //Setting up a varialbe to hold the player object
         PlayerObject = GameObject.Find("Player");
-
 
         //---------------------------------------------------------------------------------------------
         //Setting up spawners
@@ -232,14 +196,22 @@ public class PlayerController : MonoBehaviour {
         spawner11 = spawnerGameObject11.GetComponent<PoolySpawner>();
         spawner12 = spawnerGameObject12.GetComponent<PoolySpawner>();
         spawner13 = spawnerGameObject13.GetComponent<PoolySpawner>();
+        spawnerPowerupResize = spawnerResize.GetComponent<PoolySpawner>();
         spawnerPowerupSpawnCount = spawnerSpawnCount.GetComponent<PoolySpawner>();
+        spawnerPowerupResizeLarger = spawnerResizeLarger.GetComponent<PoolySpawner>();
         spawnerBig1 = spawnerBigBall1.GetComponent<PoolySpawner>();
         spawnerBig2 = spawnerBigBall2.GetComponent<PoolySpawner>();
         spawnerBig3 = spawnerBigBall3.GetComponent<PoolySpawner>();
         //---------------------------------------------------------------------------------------------
 
+        // Set the count to zero 
+
+        count = 0;
 
         pastScore = PlayerPrefs.GetInt("PastScore");
+
+        //Get Music
+        theSong.clip = song;
 
         player.constraints = RigidbodyConstraints.FreezePositionY;
 
@@ -255,40 +227,12 @@ public class PlayerController : MonoBehaviour {
         currentLvlText.text = "" + currentLvl;
         nextLvlText.text = "" + nextLvl;
 
-        //randomise zone drops
-        zone1 = Random.Range(1, 6);
-        zone2 = Random.Range(1, 6);
-        zone3 = Random.Range(1, 6);
-        zone4 = Random.Range(1, 6);
-        zone5 = Random.Range(1, 6);
-        while (zone2 == zone1)
-        {
-            zone2 = Random.Range(1, 6);
-        }
-        zone3 = Random.Range(1, 6);
-        while(zone3 == zone2 || zone3 == zone1)
-        {
-            zone3 = Random.Range(1, 6);
-        }
-        zone4 = Random.Range(1, 6);
-        while (zone4 == zone3 || zone4 == zone2 || zone4 == zone1)
-        {
-            zone4 = Random.Range(1, 6);
-        }
-        zone5 = Random.Range(1, 6);
-        while (zone5 == zone4 || zone5 == zone3 || zone5 == zone2 || zone5 == zone1)
-        {
-            zone5 = Random.Range(1, 6);
-        }
-
-
         //Get start time
         startTime = Time.time;
 
         //Get restart button object
         restartButton = GameObject.FindGameObjectWithTag("restartbutton");
         restartButton.SetActive(!restartButton.activeInHierarchy);
-
 
 
         if (PlayerPrefs.HasKey("Level"))
@@ -303,6 +247,7 @@ public class PlayerController : MonoBehaviour {
             PlayerPrefs.SetInt("LevelColour", 0);
         }
 
+        
         currentLvlText.text = "" + currentLvl;
         nextLvl = currentLvl+1;
         nextLvlText.text = "" + nextLvl;
@@ -319,7 +264,9 @@ public class PlayerController : MonoBehaviour {
         spawner10.ResumeSpawn();
         spawner11.ResumeSpawn();
         spawner12.ResumeSpawn();
+        spawnerPowerupResize.ResumeSpawn();
         spawnerPowerupSpawnCount.ResumeSpawn();
+        spawnerPowerupResizeLarger.ResumeSpawn();
         spawnerBig1.ResumeSpawn();
         spawnerBig2.ResumeSpawn();
         spawnerBig3.ResumeSpawn();
@@ -366,15 +313,6 @@ public class PlayerController : MonoBehaviour {
 
             minValue = 1;
             maxValue = 3.5f;
-
-            zone1 = Random.Range(1, 4);
-            zone2 = Random.Range(1, 4);
-
-            while(zone1 == zone2)
-            {
-                Random.Range(1, 4);
-            }
-
         }
 
        if (currentLvl >= 7 && currentLvl < 15)
@@ -658,20 +596,6 @@ public class PlayerController : MonoBehaviour {
 		if (other.gameObject.CompareTag ("Trigger"))
 		{
             player.constraints = RigidbodyConstraints.None;
-            Lean_Touch.GetComponent<LeanTouch>().enabled = false;
-        }
-
-        if (other.gameObject.CompareTag("ZoneTrigger"))
-        {
-            player.constraints = RigidbodyConstraints.None;
-            Lean_Touch.GetComponent<LeanTouch>().enabled = false;
-            //other.GetComponent<LeanChaseRigidbody>().enabled = false;
-
-        }
-
-        if (other.gameObject.CompareTag("ZoneTriggerDrop"))
-        {
-            GameOver();
         }
 
         //Game over
@@ -684,18 +608,18 @@ public class PlayerController : MonoBehaviour {
         //If player collides with Rigidbody powerup
         if (other.gameObject.tag == "PickUpRB")
         {
-            //iOSHapticController.instance.TriggerImpactMedium();
+            iOSHapticController.instance.TriggerImpactMedium();
             Destroy(other.gameObject);
             gameAudio.PlayOneShot(AudioSource);
             powerupCount++;
             player.constraints = RigidbodyConstraints.FreezePositionY;
-            //StartCoroutine(RBBall());
+            StartCoroutine(RBBall());
         }
 
         //If player collides with Resize powerup
         if (other.gameObject.CompareTag("PickUpResize"))
         {
-            //iOSHapticController.instance.TriggerImpactMedium();
+            iOSHapticController.instance.TriggerImpactMedium();
             Destroy(other.gameObject);
             gameAudio.PlayOneShot(AudioSource);
             powerupCount++;
@@ -705,7 +629,7 @@ public class PlayerController : MonoBehaviour {
         //If player collides with Spawncount powerup
         if (other.gameObject.CompareTag("PickUpSpawnCount"))
         {
-            //iOSHapticController.instance.TriggerImpactMedium();
+            iOSHapticController.instance.TriggerImpactMedium();
             Destroy(other.gameObject);
             gameAudio.PlayOneShot(AudioSource);
             powerupCount++;
@@ -713,9 +637,22 @@ public class PlayerController : MonoBehaviour {
 
         }
 
-        if (other.gameObject.CompareTag("Ball"))
+        //If player collides with Resize powerup
+        if (other.gameObject.CompareTag("PickUpResizeLarger"))
         {
-            StartCoroutine(ballBounce());
+            iOSHapticController.instance.TriggerImpactMedium();
+            Destroy(other.gameObject);
+            gameAudio.PlayOneShot(AudioSource);
+            StartCoroutine(ResizeBallLarger());
+        }
+
+        //If player collides with Movement powerup
+        if (other.gameObject.CompareTag("PickUpChangeMovementSpeed"))
+        {
+            iOSHapticController.instance.TriggerImpactMedium();
+            Destroy(other.gameObject);
+            gameAudio.PlayOneShot(AudioSource);
+            StartCoroutine(ChangeMovmentTemp());
         }
     }
     
@@ -730,13 +667,36 @@ public class PlayerController : MonoBehaviour {
         PlayerObject.gameObject.transform.localScale += new Vector3(0.3f, 0.3f, 0.3f);
     }
 
-    IEnumerator ballBounce()
+    //Resize larger powerup
+    IEnumerator ResizeBallLarger()
     {
-        gameObject.GetComponent<LeanChaseRigidbody>().enabled = false;
-        Rigidbody rigidbody = gameObject.GetComponent<Rigidbody>();
-        rigidbody.AddForce(Vector3.left * 200);
-        yield return new WaitForSeconds(0.4f);
-        gameObject.GetComponent<LeanChaseRigidbody>().enabled = true;
+        powerupText.text = "BALL SIZE MADE LARGER!";
+        PlayerObject.gameObject.transform.localScale += new Vector3(0.4f, 0.4f, 0.4f);
+        yield return new WaitForSeconds(5);
+        powerupText.text = "";
+        PlayerObject.gameObject.transform.localScale -= new Vector3(0.3f, 0.3f, 0.3f);
+    }
+
+    //Movement powerup
+    IEnumerator ChangeMovmentTemp()
+    {
+        powerupText.text = "MOVEMENT HAS BEEN SLOWED!";
+        speed = 1;
+        yield return new WaitForSeconds(3);
+        powerupText.text = "";
+        speed = 10;
+    }
+
+    //Rigidbody powerup
+    IEnumerator RBBall()
+    {
+        powerupText.text = "BALL HAS NO COLLISION!";
+        gameObject.layer = 10;
+        player.constraints = RigidbodyConstraints.FreezePositionY;
+        powerupScore = powerupScore + 5;
+        yield return new WaitForSeconds(5);
+        powerupText.text = "";
+        gameObject.layer = 9;
     }
 
     //Spawncount powerup
@@ -837,20 +797,9 @@ public class PlayerController : MonoBehaviour {
         Time.timeScale = 0;
     }
 
-    //Wait for zone to change colour
-    IEnumerator WaitForZone()
-    {
-        //change colour
-        zoneWarning1 = true;
-        yield return new WaitForSeconds(2.5f);
-        //release zone
-        zoneNo1.constraints = RigidbodyConstraints.None;
-    }
-
-    
-
     void Update()
     {
+
         //Clear timer when game ends
         if (stopTimer == true)
         {
@@ -871,112 +820,7 @@ public class PlayerController : MonoBehaviour {
         }
         progressBar.value = seconds; 
 
-        //dropzones
-        if(progressBar.value == 10)
-        {
-            if(zone1 == 1)
-            {
-
-                zoneWarning1 = true;
-
-            }
-            else if(zone1 == 2)
-            {
-
-                zoneWarning2 = true;
-
-            }
-            else if (zone1 == 3)
-            {
-
-                zoneWarning3 = true;
-
-            }
-            else if (zone1 == 4)
-            {               
-                zoneWarning4 = true;
-            }
-            else
-            {
-                zoneWarning5 = true;             
-            }
-        }
-        if (currentLvl >= 7 && progressBar.value == 23)
-        {
-            if (zone2 == 1)
-            {
-                zoneWarning1 = true;
-
-            }
-            else if (zone2 == 2)
-            {
-                zoneWarning2 = true;
-            }
-            else if (zone2 == 3)
-            {
-                zoneWarning3 = true;
-            }
-            else if (zone2 == 4)
-            {
-                zoneWarning4 = true;
-            }
-            else
-            {
-                zoneWarning5 = true;
-            }
-        }
-
-        if (currentLvl >= 18 && progressBar.value == 35)
-        {
-            if (zone3 == 1)
-            {
-                zoneWarning1 = true;
-
-            }
-            else if (zone3 == 2)
-            {
-                zoneWarning2 = true;
-            }
-            else if (zone3 == 3)
-            {
-                zoneWarning3 = true;
-            }
-            else if (zone3 == 4)
-            {
-                zoneWarning4 = true;
-            }
-            else
-            {
-                zoneWarning5 = true;
-            }
-        }
-
-        if (currentLvl >= 30 && progressBar.value == 42)
-        {
-            if (zone4 == 1)
-            {
-                zoneWarning1 = true;
-
-            }
-            else if (zone4 == 2)
-            {
-                zoneWarning2 = true;
-            }
-            else if (zone4 == 3)
-            {
-                zoneWarning3 = true;
-            }
-            else if (zone4 == 4)
-            {
-                zoneWarning4 = true;
-            }
-            else
-            {
-                zoneWarning5 = true;
-            }
-        }
-
-        if (progressBar.value == 60)
+        if(progressBar.value == 45)
         {
             if (!onetime)
             {
@@ -985,13 +829,13 @@ public class PlayerController : MonoBehaviour {
             }
             
         }
-        if(progressBar.value == 40)
+        if(progressBar.value == 25)
         {
             spawnerBig1.StopSpawn();
             spawnerBig2.StopSpawn();
             spawnerBig3.StopSpawn();
         }
-        if(progressBar.value == 53)
+        if(progressBar.value == 38)
         {
             spawner1.StopSpawn();
             spawner2.StopSpawn();
@@ -1009,38 +853,21 @@ public class PlayerController : MonoBehaviour {
             spawnerPowerupResize.StopSpawn();
             spawnerPowerupSpawnCount.StopSpawn();
             spawnerPowerupResizeLarger.StopSpawn();
-            spawnerPowerupMovement.StopSpawn();
         }
     }
-    private bool Waited(float seconds)
-    {
-        float timer = 0;
-
-        float timerMax = 0;
-
-        timerMax = seconds;
-
-        timer += Time.deltaTime;
-
-        if (timer >= timerMax)
-        {
-            return true; //max reached - waited x - seconds
-        }
-
-        return false;
-    }
-
     //Game over code that runs when player hits game over trigger
     public void GameOver()
     {
-        Lean_Touch.GetComponent<LeanTouch>().enabled = false;
+
+        //Stop Music
+        theSong.Stop();
 
         //Get player's highest saved score
         int highscore = PlayerPrefs.GetInt("Score");
 
         //Clear timer
         timerText.text = "";
-
+  
         //Create game over text
         gameOverText.text = "GAME OVER!";
 
@@ -1051,7 +878,7 @@ public class PlayerController : MonoBehaviour {
         {
             powerupScoreText.text = "You got " + powerupCount + " powerup! +" + (powerupCount * 5) + " score";
         }
-        else if (powerupCount > 0)
+        else if(powerupCount > 0)
         {
             powerupScoreText.text = "You got " + powerupCount + " powerups! +" + (powerupCount * 5) + " score";
         }
@@ -1073,51 +900,37 @@ public class PlayerController : MonoBehaviour {
         if (currentScore > highscore)
         {
             PlayerPrefs.SetInt("Score", currentScore);
-            Social.ReportScore(currentScore, "topscore", success => {
-                Debug.Log(success ? "Reported score successfully" : "Failed to report score");
-            });
         }
-       
+
+        //Delay so player does not miss out on anything while watching ad 
         StartCoroutine(Wait());
 
         //Setup mute and unmute buttons
-        if (AudioListener.pause == true)
+        if(AudioListener.pause == true)
         {
             gameoverMuteButton.SetActive(true);
         }
-        else if (AudioListener.pause == false)
-        {
+        else if(AudioListener.pause == false){
             gameoverUnmuteButton.SetActive(true);
         }
 
         //Show menu buttons
         restartButton.SetActive(true);
         leaderboardButton.SetActive(true);
+        helpButton.SetActive(true);
 
-        zoneWarning1 = false;
-        zoneWarning2 = false;
-        zoneWarning3 = false;
-        zoneWarning4 = false;
-        zoneWarning5 = false;
-    }
-
-    public void ReportScore(long score, string leaderboardID)
-    {
-        Debug.Log("Reporting score " + score + " on leaderboard " + leaderboardID);
-        Social.ReportScore(score, leaderboardID, success => {
-            Debug.Log(success ? "Reported score successfully" : "Failed to report score");
-        });
     }
 
     public void LevelComplete()
     {
-        Lean_Touch.GetComponent<LeanTouch>().enabled = false;
-
         //Show next level button
         nextLevelButton.SetActive(true);
 
         //freeze player
         player.constraints = RigidbodyConstraints.FreezeAll;
+
+        //Stop Music
+        theSong.Stop();
 
         //Set next colour scheme
         if (arrayPos >= colours.Length - 1)
@@ -1146,15 +959,6 @@ public class PlayerController : MonoBehaviour {
 
         levelComplete = true;
 
-        if(Input.touchCount >= 1)
-        {
-            StartCoroutine(nextLevel());
-        }
-        if (Input.GetMouseButtonDown(0))
-        {
-            StartCoroutine(nextLevel());
-        }
-
     }
 
     public void helpScreen()
@@ -1179,18 +983,13 @@ public class PlayerController : MonoBehaviour {
         helpCanvas.SetActive(false);
     }
 
-    public void restartButtonClick()
-    {
-        StartCoroutine(restart());
-    }
 
     //Restart game code
-    IEnumerator restart()
+    public void restart()
     {
         GameObject[] ball = GameObject.FindGameObjectsWithTag("Ball");
         foreach (GameObject go in ball)
             Destroy(go);
-        yield return new WaitForSeconds(1.5f);
         GameObject[] movement = GameObject.FindGameObjectsWithTag("PickUpChangeMovementSpeed");
         foreach (GameObject go in movement)
             Destroy(go);
@@ -1211,15 +1010,14 @@ public class PlayerController : MonoBehaviour {
         //Reload game scene
         SceneManager.LoadScene("Game");
         Time.timeScale = 1;
+
     }
 
-    IEnumerator nextLevel()
+    public void nextLevel()
     {
-
         GameObject[] ball = GameObject.FindGameObjectsWithTag("Ball");
         foreach (GameObject go in ball)
             Destroy(go);
-        yield return new WaitForSeconds(1.5f);
         GameObject[] movement = GameObject.FindGameObjectsWithTag("PickUpChangeMovementSpeed");
         foreach (GameObject go in movement)
             Destroy(go);
@@ -1235,7 +1033,6 @@ public class PlayerController : MonoBehaviour {
         GameObject[] spawnCount = GameObject.FindGameObjectsWithTag("PickUpSpawnCount");
         foreach (GameObject go in spawnCount)
             Destroy(go);
-       
         //Reload game scene
         SceneManager.LoadScene("Game");
         Time.timeScale = 1;
@@ -1292,23 +1089,6 @@ public class PlayerController : MonoBehaviour {
     {
         SceneManager.LoadScene("Main Menu");
         Time.timeScale = 1;
-    }
-
-    // This function gets called when Authenticate completes
-    void ProcessAuthentication(bool success)
-    {
-        if (success)
-        {
-            Debug.Log("Authenticated");
-
-        }
-        else
-            Debug.Log("Failed to authenticate");
-    }
-
-    void OnApplicationQuit()
-    {
-        Debug.Log("Application ending after " + Time.time + " seconds");
     }
 
 }

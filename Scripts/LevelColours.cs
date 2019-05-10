@@ -13,7 +13,10 @@ public class LevelColours : MonoBehaviour {
     private void Awake()
     {
         arrayPos = PlayerPrefs.GetInt("LevelColour");
+    }
 
+    // Update is called once per frame
+    void Update () {
         colours[arrayPos] = PlayerPrefs.GetInt("LevelColour");
 
         meshRenderer = gameObject.GetComponent<MeshRenderer>();
@@ -39,10 +42,5 @@ public class LevelColours : MonoBehaviour {
         {
             meshRenderer.sharedMaterial = material[4];
         }
-    }
-
-    // Update is called once per frame
-    void Update () {
-        
     }
 }

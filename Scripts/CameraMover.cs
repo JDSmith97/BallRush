@@ -4,15 +4,15 @@ using UnityEngine;
 
 public class CameraMover : MonoBehaviour {
 
+    private float step;
     private Rigidbody gameCamera;
     private float startTime;
     private int seconds;
 
     private void Start()
     {
-        //Define rigidbody  
+        step = Random.Range(10, 13) * Time.deltaTime;
         gameCamera = GetComponent<Rigidbody>();
-        //Start time
         startTime = Time.time;
     }
     void Update()
